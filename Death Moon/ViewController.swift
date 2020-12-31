@@ -21,6 +21,8 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
     let suncalc: SwiftySuncalc! = SwiftySuncalc()
     var deathMoonSymbol = AGSPictureMarkerSymbol(image: UIImage(named: "deathstar")!)
     var fraction = 1.0
+    var waxing = true
+    var heading = "---"
     
     private let graphicsOverlay = AGSGraphicsOverlay()
     
@@ -56,12 +58,13 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
             locationManager.delegate = self
             locationManager.desiredAccuracy = kCLLocationAccuracyBest
             locationManager.startUpdatingLocation()
+            locationManager.startUpdatingHeading()
         }
         
         configureSceneForAR()
         
         thelabel = UILabel()
-        thelabel.numberOfLines = 3
+        thelabel.numberOfLines = 5
         thelabel.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(thelabel)
 
@@ -145,7 +148,7 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
         // waxing less than 50% illumination (tie x to left and lessThan50Illumination = true)
         // waxing 50% or more illumination (tie x to right and lessThan50Illumination = true and drag from the left)
         
-        let waxing = fractionYesterday > fraction ? false : true
+        waxing = fractionYesterday > fraction ? false : true
         let tox = (!waxing && fraction < 0.5) || (waxing && fraction >= 0.5) ? 780 : 20
         let reverseFraction = fraction < 0.5 ? 1.0 - fraction : fraction
         
@@ -242,11 +245,18 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
             self.graphicsOverlay.graphics.add(graphic)
         //}
 
-        thelabel.text = String(format: "azimuth: %.02f\naltitude: %.02f\nz: %.02f",azimuth!,altitude! * 180 / Double.pi,z)
+        let waxingString = waxing ? "waxing" : "waning";
+        //thelabel.text = String(format: "azimuth: %.02f\naltitude: %.02f\nz: %.02f\nfraction: %d%%\nwaxing: \(waxingString)",azimuth!,altitude! * 180 / Double.pi,z,Int(fraction * 100))
+        thelabel.text = String(format: "my heading: \(heading)°\nazimuth: %.02f°\naltitude: %.02f°\nfraction: %d%%\nphase: \(waxingString)",azimuth!,altitude! * 180 / Double.pi,Int(fraction * 100))
         
 //        print("azimuth: ", azimuth!)
 //        print("altitude: ", altitude! * 180 / 3.14)
 //        print("z: ", z2)
+    }
+    
+    func locationManager(_ manager: CLLocationManager, didUpdateHeading newHeading: CLHeading) {
+        
+        heading = String(Int(newHeading.trueHeading))
     }
 }
 
