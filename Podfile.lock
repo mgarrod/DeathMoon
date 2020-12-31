@@ -1,0 +1,24 @@
+PODS:
+  - ArcGIS-Runtime-SDK-iOS (100.9)
+  - ArcGIS-Runtime-Toolkit-iOS (100.9.0):
+    - ArcGIS-Runtime-SDK-iOS (~> 100.9.0)
+  - SwiftySuncalc (1.0.1)
+
+DEPENDENCIES:
+  - ArcGIS-Runtime-Toolkit-iOS
+  - SwiftySuncalc (~> 1.0)
+
+SPEC REPOS:
+  trunk:
+    - ArcGIS-Runtime-SDK-iOS
+    - ArcGIS-Runtime-Toolkit-iOS
+    - SwiftySuncalc
+
+SPEC CHECKSUMS:
+  ArcGIS-Runtime-SDK-iOS: 49813cad93d11e611398d253f486b1d49dc7276f
+  ArcGIS-Runtime-Toolkit-iOS: 78457d8596d5a55e7fd87adb409b25d348e610c9
+  SwiftySuncalc: dd6a8b7886cb047056fefecf9c2fe7de7c1d93df
+
+PODFILE CHECKSUM: 3daff088598fb1ee10ef572d140837c235c475ce
+
+COCOAPODS: 1.10.0
