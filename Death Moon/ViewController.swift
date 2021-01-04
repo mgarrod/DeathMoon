@@ -23,6 +23,7 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
     var fraction = 1.0
     var waxing = true
     var heading = "---"
+    var doOffset = false
     
     private let graphicsOverlay = AGSGraphicsOverlay()
     
@@ -74,11 +75,47 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
             thelabel.widthAnchor.constraint(equalToConstant: 150),
             thelabel.heightAnchor.constraint(equalToConstant: 200)
         ])
+        
+//        let button = UIButton(frame: CGRect(x: 20, y: 20, width: 200, height: 60))
+//         button.setTitle("offset", for: .normal)
+//         button.backgroundColor = .white
+//         button.setTitleColor(UIColor.black, for: .normal)
+//         button.addTarget(self, action: #selector(self.buttonTapped), for: .touchUpInside)
+//         view.addSubview(button)
 
     }
     
+//    @objc func buttonTapped(sender : UIButton) {
+//        doOffset = !doOffset
+//    }
+    
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
+        
+        let today = Date()
+        let yesterday = Calendar.current.date(byAdding: .day, value: -1, to: today)!
+        let moon = suncalc.getMoonIllumination(date: today)
+        let moonYesterday = suncalc.getMoonIllumination(date: yesterday)
+//        print(moon["fraction"]!)
+//        print(CGFloat(moon["phase"]!) * 180 / CGFloat(Double.pi))
+        fraction = moon["fraction"]! // percent illuminated
+//        print(fraction)
+        let fractionYesterday = moonYesterday["fraction"]! // percent illuminated
+//        print(fractionYesterday)
+//        print(CGFloat(moon["angle"]!) * 180 / CGFloat(Double.pi))
+        
+        let newImage = drawImage(fraction: fraction, fractionYesterday: fractionYesterday)
+        
+        deathMoonSymbol = AGSPictureMarkerSymbol(image: newImage)
+        
+        deathMoonSymbol.height = 100
+        deathMoonSymbol.width = 100
+        
+        // test
+//        let point = AGSPoint(x: -84.47016200393804, y: 39.23550174436833, z: 100, spatialReference: .wgs84())
+//        let graphic = AGSGraphic(geometry: point, symbol: deathMoonSymbol, attributes: nil)
+//        self.graphicsOverlay.graphics.add(graphic)
+        
         //arView.startTracking(.initial, completion: nil)
         arView.startTracking(.continuous, completion: nil)
     }
@@ -113,31 +150,6 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
         // check surface placement
         // Treat the Z values as absolute altitude values
         graphicsOverlay.sceneProperties?.surfacePlacement = .absolute
-        
-        let today = Date()
-        let yesterday = Calendar.current.date(byAdding: .day, value: -1, to: today)!
-        let moon = suncalc.getMoonIllumination(date: today)
-        let moonYesterday = suncalc.getMoonIllumination(date: yesterday)
-//        print(moon["fraction"]!)
-//        print(CGFloat(moon["phase"]!) * 180 / CGFloat(Double.pi))
-        fraction = moon["fraction"]! // percent illuminated
-//        print(fraction)
-        let fractionYesterday = moonYesterday["fraction"]! // percent illuminated
-//        print(fractionYesterday)
-//        print(CGFloat(moon["angle"]!) * 180 / CGFloat(Double.pi))
-        
-        let newImage = drawImage(fraction: fraction, fractionYesterday: fractionYesterday)
-        
-        deathMoonSymbol = AGSPictureMarkerSymbol(image: newImage)
-        
-        deathMoonSymbol.height = 100
-        deathMoonSymbol.width = 100
-        deathMoonSymbol.offsetY = -50
-        
-        // test
-//        let point = AGSPoint(x: -84.47016200393804, y: 39.23550174436833, z: 100, spatialReference: .wgs84())
-//        let graphic = AGSGraphic(geometry: point, symbol: deathMoonSymbol, attributes: nil)
-//        self.graphicsOverlay.graphics.add(graphic)
         
     }
     
@@ -228,7 +240,12 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
         let distance = moonPos["distance"] ?? 400000
         deathMoonSymbol.height = CGFloat((363104 / distance) * 100)
         deathMoonSymbol.width = CGFloat((363104 / distance) * 100)
-        deathMoonSymbol.offsetY = -1 * (CGFloat((363104 / distance) * 100) / 2)
+        if (doOffset) {
+            deathMoonSymbol.offsetY = -1 * (CGFloat((363104 / distance) * 100) / 2)
+        }
+        else {
+            deathMoonSymbol.offsetY = 0
+        }
 
         // based on 1 kilometer away
         let z = 1000 * tan(altitude!)
@@ -244,10 +261,13 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
         //if (altitude! > 0) {
             self.graphicsOverlay.graphics.add(graphic)
         //}
+//        
+//        let graphic2 = AGSGraphic(geometry: points![0], symbol: AGSSimpleMarkerSymbol(style: .triangle, color: .blue, size: 14), attributes: nil)
+//        self.graphicsOverlay.graphics.add(graphic2)
 
         let waxingString = waxing ? "waxing" : "waning";
         //thelabel.text = String(format: "azimuth: %.02f\naltitude: %.02f\nz: %.02f\nfraction: %d%%\nwaxing: \(waxingString)",azimuth!,altitude! * 180 / Double.pi,z,Int(fraction * 100))
-        thelabel.text = String(format: "my heading: \(heading)°\nazimuth: %.02f°\naltitude: %.02f°\nfraction: %d%%\nphase: \(waxingString)",azimuth!,altitude! * 180 / Double.pi,Int(fraction * 100))
+        thelabel.text = String(format: "my heading: \(heading)°\nazimuth: %.02f°\naltitude: %.02f°\nfraction: %.01f%%\nphase: \(waxingString)",azimuth!,altitude! * 180 / Double.pi,fraction * 100)
         
 //        print("azimuth: ", azimuth!)
 //        print("altitude: ", altitude! * 180 / 3.14)
