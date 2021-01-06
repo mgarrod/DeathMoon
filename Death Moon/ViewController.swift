@@ -143,18 +143,16 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
         
         let today = Date()
 //        var yesterday = Calendar.current.date(byAdding: .day, value: -1, to: today)!
-//        yesterday = Calendar.current.date(byAdding: .hour, value: 12, to: today)!
+//        var yesterday = Calendar.current.date(byAdding: .hour, value: -12, to: today)!
         // get the moon illumination, phase and angle for today.
         let moon = suncalc.getMoonIllumination(date: today)
         fraction = moon["fraction"]! // percent illuminated
         waxing = moon["phase"]! <= 0.5 // 0.0 to 1.0. waxing is <= 0.5
         illuminationAngle = Double(moon["angle"]!)
-        //print((illuminationAngle - parallacticAngle) * 180/Double.pi)
         // By subtracting the parallacticAngle from the angle one can get the zenith angle of the moons bright limb (anticlockwise). The zenith angle can be used do draw the moon shape from the observers perspective (e.g. moon lying on its back).
         // I suptract 90 from it because of how I rotate the shadow
         angle = 1.5708 - (illuminationAngle - parallacticAngle)
-        angle = angle < 0.0 ? 3.14 - angle : angle
-        //print(angle * 180/Double.pi)
+        angle = angle < 0.0 ? (2 * Double.pi) + angle : angle
         
         // get a new image that will show a shadow based on illumination percent and if it is waxing / waning
         let newImage = drawImage()
@@ -306,7 +304,7 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
             locationManager.stopUpdatingLocation()
             let today = Date()
 //            var yesterday = Calendar.current.date(byAdding: .day, value: -1, to: today)!
-//            yesterday = Calendar.current.date(byAdding: .hour, value: 12, to: today)!
+//            var yesterday = Calendar.current.date(byAdding: .hour, value: -12, to: today)!
             let moonPos = suncalc.getMoonPosition(date: today, lat: locValue.latitude, lng: locValue.longitude)
             parallacticAngle = moonPos["parallacticAngle"]!
             setupImage()
@@ -314,7 +312,9 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
         else {
 
             // get the moons position
-            let moonPos = suncalc.getMoonPosition(date: Date(), lat: locValue.latitude, lng: locValue.longitude)
+            let today = Date()
+//            var yesterday = Calendar.current.date(byAdding: .hour, value: -12, to: today)!
+            let moonPos = suncalc.getMoonPosition(date: today, lat: locValue.latitude, lng: locValue.longitude)
             // get the azimuth and altitude for calculations
             // I add 180 to the azimuth because the return is set at 0° in the south and measured azimuth between −180 and +180°
             var azimuth: Double? = moonPos["azimuth"] ?? 0
