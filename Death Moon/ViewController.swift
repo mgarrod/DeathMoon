@@ -299,11 +299,11 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
         //https://ipgeolocation.io/astronomy-api.html
         //https://www.mooncalc.org/#/37.3686,-78.962,2/2020.12.21/15:53/1/3
         
-        // need getMoonPosition to set the angle of the cresent before showing the image
-        if (illuminationAngle.isNaN) {
-            
-            if (manager.location!.horizontalAccuracy > -1.0 && manager.location!.horizontalAccuracy < 100.0) {
-            
+        if (manager.location!.horizontalAccuracy > -1.0 && manager.location!.horizontalAccuracy < 100.0) {
+        
+            // need getMoonPosition to set the angle of the cresent before showing the image
+            if (illuminationAngle.isNaN) {
+                
                 //angle = locValue.latitude
                 locationManager.stopUpdatingLocation()
                 let today = Date()
@@ -313,54 +313,52 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
                 parallacticAngle = moonPos["parallacticAngle"]!
                 setupImage()
             }
-        }
-        else {
+            else {
 
-            // get the moons position
-            let today = Date()
-//            var yesterday = Calendar.current.date(byAdding: .hour, value: -12, to: today)!
-            let moonPos = suncalc.getMoonPosition(date: today, lat: locValue.latitude, lng: locValue.longitude)
-            // get the azimuth and altitude for calculations
-            // I add 180 to the azimuth because the return is set at 0° in the south and measured azimuth between −180 and +180°
-            var azimuth: Double? = moonPos["azimuth"] ?? 0
-            azimuth = 180 + (azimuth! * 180 / Double.pi)
-            let altitude: Double? = moonPos["altitude"] ?? 0
-            parallacticAngle = moonPos["parallacticAngle"]!
-            
-            // scale the image based on distance from the Earth and its perigee. 100x100 at perigee (363104 km)
-            let distance = moonPos["distance"] ?? 400000
-            deathMoonSymbol.height = CGFloat((363104 / distance) * 100)
-            deathMoonSymbol.width = CGFloat((363104 / distance) * 100)
-            deathMoonSymbol.offsetY = 0
+                // get the moons position
+                let today = Date()
+    //            var yesterday = Calendar.current.date(byAdding: .hour, value: -12, to: today)!
+                let moonPos = suncalc.getMoonPosition(date: today, lat: locValue.latitude, lng: locValue.longitude)
+                // get the azimuth and altitude for calculations
+                // I add 180 to the azimuth because the return is set at 0° in the south and measured azimuth between −180 and +180°
+                var azimuth: Double? = moonPos["azimuth"] ?? 0
+                azimuth = 180 + (azimuth! * 180 / Double.pi)
+                let altitude: Double? = moonPos["altitude"] ?? 0
+                parallacticAngle = moonPos["parallacticAngle"]!
+                
+                // scale the image based on distance from the Earth and its perigee. 100x100 at perigee (363104 km)
+                let distance = moonPos["distance"] ?? 400000
+                deathMoonSymbol.height = CGFloat((363104 / distance) * 100)
+                deathMoonSymbol.width = CGFloat((363104 / distance) * 100)
+                deathMoonSymbol.offsetY = 0
 
-            // get a z value, using an adjacent value of 1 kilometer
-            let z = 1000 * tan(altitude!)
+                // get a z value, using an adjacent value of 1 kilometer
+                let z = 1000 * tan(altitude!)
 
-            // create a point from the current location using the new z value (in meters)
-            let point = AGSPoint.init(x: locValue.longitude, y: locValue.latitude, z: z, spatialReference: .wgs84())
+                // create a point from the current location using the new z value (in meters)
+                let point = AGSPoint.init(x: locValue.longitude, y: locValue.latitude, z: z, spatialReference: .wgs84())
 
-            // move the point 1 kilometer away, at the angle (azimuth) of the moon
-            // since the z value and the distance away on the x,y plane are both based on a right triangle with an adjacent value of 1 kilometer, the moon is placed in the correct spot.
-            let points = AGSGeometryEngine.geodeticMove([point], distance: 1, distanceUnit: .kilometers(), azimuth: azimuth!, azimuthUnit: .degrees(), curveType: .geodesic )
+                // move the point 1 kilometer away, at the angle (azimuth) of the moon
+                // since the z value and the distance away on the x,y plane are both based on a right triangle with an adjacent value of 1 kilometer, the moon is placed in the correct spot.
+                let points = AGSGeometryEngine.geodeticMove([point], distance: 1, distanceUnit: .kilometers(), azimuth: azimuth!, azimuthUnit: .degrees(), curveType: .geodesic )
 
-            // set the geometry to the graphic and add it to the graphics layer (first removing it if it exists)
-            let graphic = AGSGraphic(geometry: points![0], symbol: deathMoonSymbol, attributes: nil)
-            self.graphicsOverlay.graphics.removeAllObjects()
-            //if (altitude! > 0) {
-                self.graphicsOverlay.graphics.add(graphic)
-            //}
+                // set the geometry to the graphic and add it to the graphics layer (first removing it if it exists)
+                let graphic = AGSGraphic(geometry: points![0], symbol: deathMoonSymbol, attributes: nil)
+                self.graphicsOverlay.graphics.removeAllObjects()
+                //if (altitude! > 0) {
+                    self.graphicsOverlay.graphics.add(graphic)
+                //}
 
-            // show some specs on the screen
-            let waxingString = waxing ? "waxing" : "waning";
-            thelabel.text = String(format: "azimuth: %.02f°\naltitude: %.02f°\nfraction: %.01f%%\nangle: %.01f%°\nphase: \(waxingString)",azimuth!,altitude! * 180 / Double.pi,fraction * 100,angle * 180 / Double.pi)
-//            thelabel.text = String(format: "my heading: \(heading)°\nazimuth: %.02f°\naltitude: %.02f°\nfraction: %.01f%%\nangle: %.01f%°\nphase: \(waxingString)",azimuth!,altitude! * 180 / Double.pi,fraction * 100,angle * 180 / Double.pi)
-            
-            // stop the location manager is accuracy is good. Don't worry, it will start back up again after 30 seconds to get a new image.
-            // This stops the image from bouncing
-            if (manager.location!.horizontalAccuracy > -1.0 && manager.location!.horizontalAccuracy < 100.0) {
+                // show some specs on the screen
+                let waxingString = waxing ? "waxing" : "waning";
+                thelabel.text = String(format: "azimuth: %.02f°\naltitude: %.02f°\nfraction: %.01f%%\nangle: %.01f%°\nphase: \(waxingString)",azimuth!,altitude! * 180 / Double.pi,fraction * 100,angle * 180 / Double.pi)
+    //            thelabel.text = String(format: "my heading: \(heading)°\nazimuth: %.02f°\naltitude: %.02f°\nfraction: %.01f%%\nangle: %.01f%°\nphase: \(waxingString)",azimuth!,altitude! * 180 / Double.pi,fraction * 100,angle * 180 / Double.pi)
+                
+                // stop the location manager. Don't worry, it will start back up again after 30 seconds to get a new image.
+                // This stops the image from bouncing
                 locationManager.stopUpdatingLocation()
+                
             }
-            
         }
     }
     
