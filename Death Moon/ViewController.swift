@@ -79,7 +79,7 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
         
         // setup the label for spec display in the bottom right
         thelabel = UILabel()
-        thelabel.numberOfLines = 6
+        thelabel.numberOfLines = 5
         thelabel.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(thelabel)
         NSLayoutConstraint.activate([
@@ -89,8 +89,8 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
             thelabel.heightAnchor.constraint(equalToConstant: 200)
         ])
         
-        // update the image every minute. Do not want to update everytime the position changes because of all it does.
-        _ = Timer.scheduledTimer(timeInterval: 360.0, target: self, selector: #selector(setupImage), userInfo: nil, repeats: true)
+        // update the image every 30 seconds and restart location manager. Do not want to update every time the position changes because of all it does.
+        _ = Timer.scheduledTimer(timeInterval: 30.0, target: self, selector: #selector(setupImage), userInfo: nil, repeats: true)
 
     }
 
@@ -151,7 +151,7 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
         illuminationAngle = Double(moon["angle"]!)
         // By subtracting the parallacticAngle from the angle one can get the zenith angle of the moons bright limb (anticlockwise). The zenith angle can be used do draw the moon shape from the observers perspective (e.g. moon lying on its back).
         // I suptract 90 from it because of how I rotate the shadow
-        angle = 1.5708 - (illuminationAngle - parallacticAngle)
+        angle = (Double.pi / 2) - (illuminationAngle - parallacticAngle)
         angle = angle < 0.0 ? (2 * Double.pi) + angle : angle
         
         // get a new image that will show a shadow based on illumination percent and if it is waxing / waning
@@ -162,6 +162,7 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
         deathMoonSymbol.width = 100
         deathMoonSymbol.offsetY = 0
         
+        // start location manager back up
         locationManager.startUpdatingLocation()
         
         // test graphic
@@ -256,7 +257,7 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
         
         let deathstar = UIImage(named: "deathstar")
 
-        // use core graphics to draw the shadow based on the to / control points and clips the image
+        // use core graphics to draw the shadow based on the to / control points and clip the image
         let s = deathstar!.size
         UIGraphicsBeginImageContext(s);
         let g = UIGraphicsGetCurrentContext();
@@ -300,14 +301,18 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
         
         // need getMoonPosition to set the angle of the cresent before showing the image
         if (illuminationAngle.isNaN) {
-            //angle = locValue.latitude
-            locationManager.stopUpdatingLocation()
-            let today = Date()
-//            var yesterday = Calendar.current.date(byAdding: .day, value: -1, to: today)!
-//            var yesterday = Calendar.current.date(byAdding: .hour, value: -12, to: today)!
-            let moonPos = suncalc.getMoonPosition(date: today, lat: locValue.latitude, lng: locValue.longitude)
-            parallacticAngle = moonPos["parallacticAngle"]!
-            setupImage()
+            
+            if (manager.location!.horizontalAccuracy > -1.0 && manager.location!.horizontalAccuracy < 100.0) {
+            
+                //angle = locValue.latitude
+                locationManager.stopUpdatingLocation()
+                let today = Date()
+    //            var yesterday = Calendar.current.date(byAdding: .day, value: -1, to: today)!
+    //            var yesterday = Calendar.current.date(byAdding: .hour, value: -12, to: today)!
+                let moonPos = suncalc.getMoonPosition(date: today, lat: locValue.latitude, lng: locValue.longitude)
+                parallacticAngle = moonPos["parallacticAngle"]!
+                setupImage()
+            }
         }
         else {
 
@@ -322,7 +327,7 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
             let altitude: Double? = moonPos["altitude"] ?? 0
             parallacticAngle = moonPos["parallacticAngle"]!
             
-            // scale the imaged based on distance from the Earth and its perigee. 100x100 at perigee (363104 km)
+            // scale the image based on distance from the Earth and its perigee. 100x100 at perigee (363104 km)
             let distance = moonPos["distance"] ?? 400000
             deathMoonSymbol.height = CGFloat((363104 / distance) * 100)
             deathMoonSymbol.width = CGFloat((363104 / distance) * 100)
@@ -331,7 +336,7 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
             // get a z value, using an adjacent value of 1 kilometer
             let z = 1000 * tan(altitude!)
 
-            // create a point from the current location and the new z value (in meters)
+            // create a point from the current location using the new z value (in meters)
             let point = AGSPoint.init(x: locValue.longitude, y: locValue.latitude, z: z, spatialReference: .wgs84())
 
             // move the point 1 kilometer away, at the angle (azimuth) of the moon
@@ -340,16 +345,21 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
 
             // set the geometry to the graphic and add it to the graphics layer (first removing it if it exists)
             let graphic = AGSGraphic(geometry: points![0], symbol: deathMoonSymbol, attributes: nil)
-            if self.graphicsOverlay.graphics.count > 0 {
-                self.graphicsOverlay.graphics.removeObject(at: 0)
-            }
+            self.graphicsOverlay.graphics.removeAllObjects()
             //if (altitude! > 0) {
                 self.graphicsOverlay.graphics.add(graphic)
             //}
 
             // show some specs on the screen
             let waxingString = waxing ? "waxing" : "waning";
-            thelabel.text = String(format: "my heading: \(heading)°\nazimuth: %.02f°\naltitude: %.02f°\nfraction: %.01f%%\nangle: %.01f%°\nphase: \(waxingString)",azimuth!,altitude! * 180 / Double.pi,fraction * 100,angle * 180 / Double.pi)
+            thelabel.text = String(format: "azimuth: %.02f°\naltitude: %.02f°\nfraction: %.01f%%\nangle: %.01f%°\nphase: \(waxingString)",azimuth!,altitude! * 180 / Double.pi,fraction * 100,angle * 180 / Double.pi)
+//            thelabel.text = String(format: "my heading: \(heading)°\nazimuth: %.02f°\naltitude: %.02f°\nfraction: %.01f%%\nangle: %.01f%°\nphase: \(waxingString)",azimuth!,altitude! * 180 / Double.pi,fraction * 100,angle * 180 / Double.pi)
+            
+            // stop the location manager is accuracy is good. Don't worry, it will start back up again after 30 seconds to get a new image.
+            // This stops the image from bouncing
+            if (manager.location!.horizontalAccuracy > -1.0 && manager.location!.horizontalAccuracy < 100.0) {
+                locationManager.stopUpdatingLocation()
+            }
             
         }
     }
