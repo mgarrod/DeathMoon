@@ -200,9 +200,9 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
         // algorithm I came up with to set the to / control points based on illumination percent and waxing / waning
         // not 100% happy with it, but it works
         to1y = Int(((reverseFraction-1)*500)*((1-reverseFraction)*10))
-        controlx = Int(reverseFraction * 1100.0)
+        controlx = Int(reverseFraction * 1000.0)
         controlx = (!waxing && fraction < 0.5) || (waxing && fraction >= 0.5) ? 800 - controlx : controlx // control2x = 800 - (control1x)
-        control1y = Int(-1*((reverseFraction*200)-((1-reverseFraction)*160)))
+        control1y = Int(-1*((reverseFraction*170)-((1-reverseFraction)*170)))
         
         var to1x = tox
         var to2x = tox
