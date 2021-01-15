@@ -152,7 +152,9 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
         // By subtracting the parallacticAngle from the angle one can get the zenith angle of the moons bright limb (anticlockwise). The zenith angle can be used do draw the moon shape from the observers perspective (e.g. moon lying on its back).
         // I suptract 90 from it because of how I rotate the shadow
         angle = (Double.pi / 2) - (illuminationAngle - parallacticAngle)
-        angle = angle < 0.0 ? (2 * Double.pi) + angle : angle
+        //
+        angle = waxing ? angle + Double.pi : angle
+        angle = angle < 0.0 ? (2 * Double.pi) + angle : angle > (2 * Double.pi) ? angle - (2 * Double.pi) : angle
         
         // get a new image that will show a shadow based on illumination percent and if it is waxing / waning
         let newImage = drawImage()
