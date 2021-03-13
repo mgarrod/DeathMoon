@@ -20,6 +20,12 @@
 	<string>1</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>Please</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Please</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Please</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
@@ -60,11 +66,5 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
-    <key>NSLocationWhenInUseUsageDescription</key>
-    <string>Please</string>
-    <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-    <string>Please</string>
-    <key>NSCameraUsageDescription</key>
-    <string>Please</string>
 </dict>
 </plist>
